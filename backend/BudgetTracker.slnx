@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/BudgetTracker.Application/BudgetTracker.Application.csproj" />
+    <Project Path="src/BudgetTracker.Domain/BudgetTracker.Domain.csproj" />
+    <Project Path="src/BudgetTracker.Infrastructure/BudgetTracker.Infrastructure.csproj" />
+    <Project Path="src/BudgetTracker.Web/BudgetTracker.Web.csproj" />
+  </Folder>
+</Solution>

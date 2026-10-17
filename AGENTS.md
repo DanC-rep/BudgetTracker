@@ -12,14 +12,15 @@ BudgetTracker — трекер бюджета. Бизнес-контекст: [d
 
 ## Команды
 
-<!-- TODO: заполнить после создания проекта -->
-- Сборка: `dotnet build` (уточнить путь к solution)
-- Тесты: `dotnet test` (уточнить)
-- Линт/форматирование: —
-- Frontend: `npm run dev` / `npm run build` (уточнить путь)
+- Сборка: `dotnet build backend/BudgetTracker.slnx`
+- Запуск API: `dotnet run --project backend/src/BudgetTracker.Web`
+- Frontend: `npm run dev` / `npm run build` (появится после создания Next.js-приложения)
 
 ## Соглашения
 
+- Архитектура backend — классический многослойный: `BudgetTracker.Domain` → `BudgetTracker.Application` → `BudgetTracker.Infrastructure`, хост — `BudgetTracker.Web`. Фиче-папки и отдельные проекты на каждую сущность не создавать. Тестовых проектов нет.
+- Shared-библиотеки не создавать в этом репозитории — подключаются как NuGet-пакеты (`DanC-rep.SharedKernel`, `DanC-rep.Core`, `DanC-rep.Framework`) из GitHub-фида пользователя; источники и креды — в `backend/nuget.config`.
+- Solution в формате SDK 10 — `BudgetTracker.slnx` (не `.sln`).
 - Язык общения с пользователем: русский.
 - Код, коммиты и PR — на английском, если не сказано иное.
 - Дополнительные .NET-скиллы (стандарты C#, EF Core, DI и т.д.) лежат в `.agents/skills/`, список — в `.agents/skills/README.md`.
@@ -27,7 +28,11 @@ BudgetTracker — трекер бюджета. Бизнес-контекст: [d
 
 ## Структура репозитория
 
-<!-- TODO: описать после создания проекта -->
+- `backend/` — solution и весь backend-код
+  - `src/BudgetTracker.Domain/` — доменные сущности (пользователи, категории, транзакции, бюджеты)
+  - `src/BudgetTracker.Application/` — бизнес-логика, use cases
+  - `src/BudgetTracker.Infrastructure/` — EF Core, репозитории, PostgreSQL
+  - `src/BudgetTracker.Web/` — Web-хост (контроллеры, Program.cs)
 - `docs/` — документация (бизнес-модель)
 - `.agents/skills/` — скиллы для агентов
 - `.kimi-code/mcp.json` — конфиг MCP (PostgreSQL; строка подключения — заглушка, обновить при создании БД)
