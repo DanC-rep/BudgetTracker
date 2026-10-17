@@ -2,7 +2,7 @@
   "mcpServers": {
     "postgres": {
       "command": "C:/Users/Даниил/.local/bin/postgres-mcp.exe",
-      "args": ["postgresql://postgres:postgres@localhost:5432/postgres"]
+      "args": ["postgresql://postgres:postgres@localhost:5432/budget_tracker"]
     }
   }
 }

@@ -29,10 +29,10 @@ BudgetTracker — трекер бюджета. Бизнес-контекст: [d
 ## Структура репозитория
 
 - `backend/` — solution и весь backend-код
-  - `src/BudgetTracker.Domain/` — доменные сущности (пользователи, категории, транзакции, бюджеты)
+  - `src/BudgetTracker.Domain/` — доменные сущности (пользователи, счета, категории, операции)
   - `src/BudgetTracker.Application/` — бизнес-логика, use cases
   - `src/BudgetTracker.Infrastructure/` — EF Core, репозитории, PostgreSQL
   - `src/BudgetTracker.Web/` — Web-хост (контроллеры, Program.cs)
-- `docs/` — документация (бизнес-модель)
+- `docs/` — документация (бизнес-модель, бизнес-операции Application-слоя)
 - `.agents/skills/` — скиллы для агентов
-- `.kimi-code/mcp.json` — конфиг MCP (PostgreSQL; строка подключения — заглушка, обновить при создании БД)
+- `.kimi-code/mcp.json` — конфиг MCP (PostgreSQL; строка подключения указывает на БД `budget_tracker` из docker-compose)

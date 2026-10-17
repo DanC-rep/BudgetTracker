@@ -23,60 +23,59 @@ namespace BudgetTracker.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("BudgetTracker.Domain.Budgets.Budget", b =>
+            modelBuilder.Entity("BudgetTracker.Domain.Accounts.Account", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<Guid?>("CategoryId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("category_id");
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_archived");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid")
-                        .HasColumnName("user_id");
+                        .HasColumnName("owner_id");
 
-                    b.ComplexProperty(typeof(Dictionary<string, object>), "Limit", "BudgetTracker.Domain.Budgets.Budget.Limit#Money", b1 =>
+                    b.Property<int>("Type")
+                        .HasColumnType("integer")
+                        .HasColumnName("type");
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "InitialBalance", "BudgetTracker.Domain.Accounts.Account.InitialBalance#Money", b1 =>
                         {
                             b1.IsRequired();
 
                             b1.Property<decimal>("Amount")
                                 .HasPrecision(18, 2)
                                 .HasColumnType("numeric(18,2)")
-                                .HasColumnName("limit_amount");
+                                .HasColumnName("initial_balance");
 
                             b1.Property<string>("Currency")
                                 .IsRequired()
                                 .HasMaxLength(3)
                                 .HasColumnType("character varying(3)")
-                                .HasColumnName("limit_currency");
+                                .HasColumnName("currency");
                         });
 
-                    b.ComplexProperty(typeof(Dictionary<string, object>), "Period", "BudgetTracker.Domain.Budgets.Budget.Period#BudgetPeriod", b1 =>
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "Name", "BudgetTracker.Domain.Accounts.Account.Name#AccountName", b1 =>
                         {
                             b1.IsRequired();
 
-                            b1.Property<int>("Month")
-                                .HasColumnType("integer")
-                                .HasColumnName("period_month");
-
-                            b1.Property<int>("Year")
-                                .HasColumnType("integer")
-                                .HasColumnName("period_year");
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("name");
                         });
 
                     b.HasKey("Id")
-                        .HasName("pk_budgets");
+                        .HasName("pk_accounts");
 
-                    b.HasIndex("CategoryId")
-                        .HasDatabaseName("ix_budgets_category_id");
+                    b.HasIndex("OwnerId")
+                        .HasDatabaseName("ix_accounts_owner_id");
 
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_budgets_user_id");
-
-                    b.ToTable("budgets", (string)null);
+                    b.ToTable("accounts", (string)null);
                 });
 
             modelBuilder.Entity("BudgetTracker.Domain.Categories.Category", b =>
@@ -86,6 +85,26 @@ namespace BudgetTracker.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("color");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("icon");
+
+                    b.Property<bool>("IsHidden")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_hidden");
+
+                    b.Property<bool>("IsSystem")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_system");
+
                     b.Property<int>("Type")
                         .HasColumnType("integer")
                         .HasColumnName("type");
@@ -93,6 +112,20 @@ namespace BudgetTracker.Infrastructure.Migrations
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "MonthlyLimit", "BudgetTracker.Domain.Categories.Category.MonthlyLimit#Money", b1 =>
+                        {
+                            b1.Property<decimal>("Amount")
+                                .HasPrecision(18, 2)
+                                .HasColumnType("numeric(18,2)")
+                                .HasColumnName("monthly_limit_amount");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .HasColumnType("character varying(3)")
+                                .HasColumnName("monthly_limit_currency");
+                        });
 
                     b.ComplexProperty(typeof(Dictionary<string, object>), "Name", "BudgetTracker.Domain.Categories.Category.Name#CategoryName", b1 =>
                         {
@@ -121,13 +154,25 @@ namespace BudgetTracker.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<Guid>("CategoryId")
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("account_id");
+
+                    b.Property<Guid?>("CategoryId")
                         .HasColumnType("uuid")
                         .HasColumnName("category_id");
 
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date")
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("date");
+
+                    b.Property<Guid?>("ToAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("to_account_id");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer")
+                        .HasColumnName("type");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
@@ -161,8 +206,14 @@ namespace BudgetTracker.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_transactions");
 
+                    b.HasIndex("AccountId")
+                        .HasDatabaseName("ix_transactions_account_id");
+
                     b.HasIndex("CategoryId")
                         .HasDatabaseName("ix_transactions_category_id");
+
+                    b.HasIndex("ToAccountId")
+                        .HasDatabaseName("ix_transactions_to_account_id");
 
                     b.HasIndex("UserId", "Date")
                         .HasDatabaseName("ix_transactions_user_id_date");
@@ -177,9 +228,21 @@ namespace BudgetTracker.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("AvatarColor")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("avatar_color");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -197,26 +260,31 @@ namespace BudgetTracker.Infrastructure.Migrations
                                 .HasColumnName("email");
                         });
 
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "Login", "BudgetTracker.Domain.Users.User.Login#Login", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("login");
+                        });
+
                     b.HasKey("Id")
                         .HasName("pk_users");
 
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("BudgetTracker.Domain.Budgets.Budget", b =>
+            modelBuilder.Entity("BudgetTracker.Domain.Accounts.Account", b =>
                 {
-                    b.HasOne("BudgetTracker.Domain.Categories.Category", null)
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_budgets_categories_category_id");
-
                     b.HasOne("BudgetTracker.Domain.Users.User", null)
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_budgets_users_user_id");
+                        .HasConstraintName("fk_accounts_users_owner_id");
                 });
 
             modelBuilder.Entity("BudgetTracker.Domain.Categories.Category", b =>
@@ -230,12 +298,24 @@ namespace BudgetTracker.Infrastructure.Migrations
 
             modelBuilder.Entity("BudgetTracker.Domain.Transactions.Transaction", b =>
                 {
+                    b.HasOne("BudgetTracker.Domain.Accounts.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_transactions_accounts_account_id");
+
                     b.HasOne("BudgetTracker.Domain.Categories.Category", null)
                         .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
                         .HasConstraintName("fk_transactions_categories_category_id");
+
+                    b.HasOne("BudgetTracker.Domain.Accounts.Account", null)
+                        .WithMany()
+                        .HasForeignKey("ToAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_transactions_accounts_to_account_id");
 
                     b.HasOne("BudgetTracker.Domain.Users.User", null)
                         .WithMany()

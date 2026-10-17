@@ -26,6 +26,35 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             .HasColumnName("type")
             .IsRequired();
 
+        builder.Property(c => c.Icon)
+            .HasColumnName("icon")
+            .IsRequired()
+            .HasMaxLength(Category.MAX_ICON_LENGTH);
+
+        builder.Property(c => c.Color)
+            .HasColumnName("color")
+            .IsRequired()
+            .HasMaxLength(Category.MAX_COLOR_LENGTH);
+
+        builder.ComplexProperty(c => c.MonthlyLimit, mb =>
+        {
+            mb.Property(m => m.Amount)
+                .HasColumnName("monthly_limit_amount")
+                .HasPrecision(18, Money.MAX_PRECISION);
+
+            mb.Property(m => m.Currency)
+                .HasColumnName("monthly_limit_currency")
+                .HasMaxLength(3);
+        });
+
+        builder.Property(c => c.IsSystem)
+            .HasColumnName("is_system")
+            .IsRequired();
+
+        builder.Property(c => c.IsHidden)
+            .HasColumnName("is_hidden")
+            .IsRequired();
+
         builder.Property(c => c.UserId)
             .HasColumnName("user_id");
 
