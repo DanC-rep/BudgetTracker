@@ -69,4 +69,5 @@
 ## Открытые вопросы
 
 1. **Авторизация** — по умолчанию JWT (Bearer) + `Microsoft.AspNetCore.Authentication.JwtBearer`, регистрация/логин возвращают токен. Альтернатива: пока захардкоженный пользователь.
-2. **Порядок реализации** — предлагается: Accounts + Categories → Transactions → Auth → Отчёты.
+
+Все пять категорий бизнес-операций реализованы: Users, Accounts, Categories, Transactions, Reports.

@@ -1,4 +1,7 @@
+using BudgetTracker.Application.Abstractions;
+using BudgetTracker.Application.DependencyInjection;
 using BudgetTracker.Infrastructure.DependencyInjection;
+using BudgetTracker.Web.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,9 +11,16 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddApplication();
+
 builder.Services.AddBudgetTrackerDbContext(
     builder.Configuration.GetConnectionString("BudgetTrackerDb")
         ?? throw new InvalidOperationException("Connection string 'BudgetTrackerDb' is not configured."));
+builder.Services.AddBudgetTrackerRepositories();
+builder.Services.AddBudgetTrackerAuthentication(builder.Configuration);
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
 
 var app = builder.Build();
 
@@ -18,10 +28,13 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwaggerUI(options =>
+        options.SwaggerEndpoint("/openapi/v1.json", "BudgetTracker API v1"));
 }
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

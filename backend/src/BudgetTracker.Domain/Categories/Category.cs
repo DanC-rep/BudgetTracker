@@ -87,12 +87,44 @@ public class Category : Entity<Guid>
         Name = name;
     }
 
-    public void ChangeMonthlyLimit(Money? monthlyLimit)
+    public UnitResult<Error> ChangeIcon(string icon)
+    {
+        if (string.IsNullOrWhiteSpace(icon))
+            return GeneralErrors.ValueIsRequired("иконка");
+
+        icon = icon.Trim();
+
+        if (icon.Length > MAX_ICON_LENGTH)
+            return GeneralErrors.Length("иконки", MAX_ICON_LENGTH);
+
+        Icon = icon;
+
+        return UnitResult.Success<Error>();
+    }
+
+    public UnitResult<Error> ChangeColor(string color)
+    {
+        if (string.IsNullOrWhiteSpace(color))
+            return GeneralErrors.ValueIsRequired("цвет");
+
+        color = color.Trim();
+
+        if (color.Length > MAX_COLOR_LENGTH)
+            return GeneralErrors.Length("цвета", MAX_COLOR_LENGTH);
+
+        Color = color;
+
+        return UnitResult.Success<Error>();
+    }
+
+    public UnitResult<Error> ChangeMonthlyLimit(Money? monthlyLimit)
     {
         if (monthlyLimit is not null && Type != CategoryType.Expense)
-            throw new InvalidOperationException("Лимит задаётся только для категорий расходов");
+            return Error.Validation("category.limit.expense.only", "Лимит задаётся только для категорий расходов");
 
         MonthlyLimit = monthlyLimit;
+
+        return UnitResult.Success<Error>();
     }
 
     public void Hide()
