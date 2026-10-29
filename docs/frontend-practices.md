@@ -112,8 +112,10 @@ src/
 
 ## Стилизация
 
-- Только Tailwind-классы; сборка условных классов — через `cn()` из `shared/lib/utils` (clsx + tailwind-merge);
+- Только Tailwind-классы; сборка условных классов — через пакет `cn` (`import { cn } from "cn"` — ставится shadcn CLI, локальный `cn()` в `shared/lib` не используется);
 - shadcn-компоненты — в `shared/components/ui`, добавлять через shadcn CLI, стилизовать пропсами/классами снаружи;
+- компоненты shadcn построены на Base UI: вместо `asChild` используется проп `render` — например
+  `<SidebarMenuButton render={<Link href={routes.home} />}>`;
 - иконки — только lucide-react;
 - тёмная тема — next-themes, стили для неё через `dark:` варианты;
 - глобальные стили и CSS-переменные темы — в `src/app/globals.css`.
