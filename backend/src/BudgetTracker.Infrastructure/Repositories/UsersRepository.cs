@@ -26,4 +26,7 @@ public class UsersRepository : IUsersRepository
 
     public Task<User?> GetByLoginAsync(Login login, CancellationToken cancellationToken) =>
         _dbContext.Users.FirstOrDefaultAsync(u => u.Login.Value == login.Value, cancellationToken);
+
+    public Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
+        _dbContext.Users.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
 }

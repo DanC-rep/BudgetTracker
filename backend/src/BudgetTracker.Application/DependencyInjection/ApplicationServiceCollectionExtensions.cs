@@ -13,6 +13,7 @@ public static class ApplicationServiceCollectionExtensions
     {
         services.AddScoped<RegisterUser>();
         services.AddScoped<LoginUser>();
+        services.AddScoped<GetCurrentUser>();
 
         services.AddScoped<CreateAccount>();
         services.AddScoped<RenameAccount>();

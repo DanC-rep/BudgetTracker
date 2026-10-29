@@ -1,16 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { toast } from 'sonner'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { Input } from '@/shared/components/ui/input'
-import { routes } from '@/shared/routes'
+import { useRegister } from './model/use-register'
 
 const registerSchema = z
    .object({
@@ -34,7 +32,6 @@ const registerSchema = z
 type RegisterFormData = z.infer<typeof registerSchema>
 
 export function RegisterForm() {
-   const router = useRouter()
    const [showPassword, setShowPassword] = useState(false)
 
    const {
@@ -46,10 +43,15 @@ export function RegisterForm() {
       resolver: zodResolver(registerSchema),
    })
 
+   const { register: registerUser, isPending } = useRegister()
+
    const onSubmit = (data: RegisterFormData) => {
-      // Temporary: no backend yet. Will call the register API once integration starts.
-      toast.success(`Аккаунт «${data.login}» зарегистрирован`)
-      router.push(routes.home)
+      registerUser({
+         login: data.login,
+         email: data.email,
+         password: data.password,
+         name: data.name,
+      })
    }
 
    return (
@@ -137,8 +139,8 @@ export function RegisterForm() {
                   )}
                </div>
 
-               <Button type="submit" className="w-full">
-                  Зарегистрироваться
+               <Button type="submit" className="w-full" disabled={isPending}>
+                  {isPending ? 'Создание аккаунта...' : 'Зарегистрироваться'}
                </Button>
             </form>
          </CardContent>

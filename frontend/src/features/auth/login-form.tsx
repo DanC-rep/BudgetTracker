@@ -1,16 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { toast } from 'sonner'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { Input } from '@/shared/components/ui/input'
-import { routes } from '@/shared/routes'
+import { useLogin } from './model/use-login'
 
 const loginSchema = z.object({
    login: z.string().min(1, 'Введите логин'),
@@ -20,7 +18,6 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>
 
 export function LoginForm() {
-   const router = useRouter()
    const [showPassword, setShowPassword] = useState(false)
 
    const {
@@ -32,10 +29,10 @@ export function LoginForm() {
       resolver: zodResolver(loginSchema),
    })
 
+   const { login, isPending } = useLogin()
+
    const onSubmit = (data: LoginFormData) => {
-      // Temporary: no backend yet. Will call the login API once integration starts.
-      toast.success(`Вы вошли как ${data.login}`)
-      router.push(routes.home)
+      login(data)
    }
 
    return (
@@ -80,8 +77,8 @@ export function LoginForm() {
                   {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
                </div>
 
-               <Button type="submit" className="w-full">
-                  Войти
+               <Button type="submit" className="w-full" disabled={isPending}>
+                  {isPending ? 'Вход...' : 'Войти'}
                </Button>
             </form>
          </CardContent>

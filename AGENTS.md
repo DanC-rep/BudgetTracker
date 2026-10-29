@@ -19,7 +19,7 @@ BudgetTracker — трекер бюджета. Бизнес-контекст: [d
 ## Соглашения
 
 - Архитектура backend — классический многослойный: `BudgetTracker.Domain` → `BudgetTracker.Application` → `BudgetTracker.Infrastructure`, хост — `BudgetTracker.Web`. Фиче-папки и отдельные проекты на каждую сущность не создавать. Тестовых проектов нет.
-- Frontend-код пишется по практикам из [docs/frontend-practices.md](docs/frontend-practices.md) (слоистая структура, react-query/zustand, envelope API).
+- Frontend-код пишется по практикам из [docs/frontend-practices.md](docs/frontend-practices.md) (слоистая структура, react-query/zustand, ProblemDetails API).
 - Shared-библиотеки не создавать в этом репозитории — подключаются как NuGet-пакеты (`DanC-rep.SharedKernel`, `DanC-rep.Core`, `DanC-rep.Framework`) из GitHub-фида пользователя; источники и креды — в `backend/nuget.config`.
 - Solution в формате SDK 10 — `BudgetTracker.slnx` (не `.sln`).
 - Язык общения с пользователем: русский.

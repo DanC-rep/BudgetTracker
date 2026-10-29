@@ -5,13 +5,6 @@ import { AccountWithBalance } from '@/entities/accounts/types'
 import { Category } from '@/entities/categories/types'
 import { Transaction } from '@/entities/transactions/types'
 
-export const currentUser = {
-   id: 'u-1',
-   name: 'Даниил',
-   login: 'danc',
-   avatarColor: '#4f46e5',
-}
-
 export const mockAccounts: AccountWithBalance[] = [
    { id: 'acc-1', name: 'Наличные', type: 'cash', initialBalance: 15000, balance: 23840.5, isArchived: false },
    { id: 'acc-2', name: 'Карта Сбер', type: 'card', initialBalance: 50000, balance: 87420.75, isArchived: false },

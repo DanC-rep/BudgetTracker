@@ -1,9 +1,26 @@
+'use client'
+
 import Link from 'next/link'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Landmark } from 'lucide-react'
 import { routes } from '@/shared/routes'
+import { useAuthToken } from '@/shared/hooks/use-auth-token'
+import { useMounted } from '@/shared/hooks/use-mounted'
 import { ThemeToggle } from '@/features/theme/theme-toggle'
 
 export default function AuthGroupLayout({ children }: { children: React.ReactNode }) {
+   const router = useRouter()
+   const mounted = useMounted()
+   const token = useAuthToken()
+
+   // Already authenticated users have no business on auth pages
+   useEffect(() => {
+      if (mounted && token !== null) {
+         router.replace(routes.home)
+      }
+   }, [mounted, token, router])
+
    return (
       <div className="relative flex min-h-svh flex-1 flex-col items-center justify-center p-4">
          <div className="absolute top-4 right-4">

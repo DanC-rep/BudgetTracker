@@ -44,15 +44,19 @@ src/
 
 ## API-слой (shared/api)
 
-- `axios-instance.ts`: единый `apiClient = axios.create({ baseURL, headers })` + response-интерцептор:
-  если тело ответа — `Envelope` с `isError === true`, бросить `EnvelopeError(envelope.error)`.
-- `envelope.ts`: `Envelope<T> = { result: T | null; error: ApiError | null; isError: boolean; timeGenerated: string }`
-  — зеркалит backend-конвенцию envelope.
-- `errors.ts`: `ApiError { messages: ErrorMessage[]; type: ErrorType }`,
-  `ErrorMessage { code; message; invalidField? }`,
-  `ErrorType = 'validation' | 'not_found' | 'failure' | 'conflict' | 'authentication' | 'authorization'`;
-  класс `EnvelopeError extends Error` с геттерами `messages`, `firstMessage`, `getAllMessages()`
-  и type-guard `isEnvelopeError`.
+Контракт бэкенда: успех — сырой payload, ошибка — `ProblemDetails` с массивом `errors` в extensions
+(маппинг в `Web/Extensions/ResultExtensions.cs`). Envelope не используется.
+
+- `axios-instance.ts`: единый `apiClient = axios.create({ baseURL: process.env.NEXT_PUBLIC_API_URL, ... })`;
+  baseURL по умолчанию `http://localhost:5094` (см. `frontend/.env.example`);
+  request-интерцептор прикрепляет `Authorization: Bearer` из `auth-token.ts` (localStorage);
+  response-интерцептор: 401 → очистка токена и редирект на `/login`;
+  тело `ProblemDetails` → `throw ApiRequestError(status, { type, messages })`;
+- `errors.ts`: `ApiErrorMessage { code; message; invalidField? }`, `ErrorType = 'validation' | 'not_found' | 'failure' | 'conflict' | 'authentication' | 'authorization'`;
+  класс `ApiRequestError` (геттеры `messages`, `firstMessage`, `type`) и type-guard `isApiRequestError`;
+  `errorTypeFromStatus` — обратный маппинг HTTP-статуса в доменный тип;
+- `problem-details.ts`: `isProblemDetailsBody` — определение формата тела ошибки;
+- `auth-token.ts`: `getAuthToken` / `setAuthToken` / `clearAuthToken` (SSR-guard через `typeof window`);
 - `types.ts`: общий `PaginationResponse<T> = { items; totalCount; page; pageSize; totalPages }`.
 - `query-client.ts`: единый `queryClient` со `staleTime: 1000 * 60`; провайдер `QueryClientProvider`
   оборачивает приложение в layout-фиче (`features/layout/app-layout.tsx`), там же `<Toaster />`
@@ -60,7 +64,8 @@ src/
 
 ## entities/<домен>/api.ts
 
-- Объект `*Api` с методами: `apiClient.get<Envelope<PaginationResponse<T>>>(...)` → вернуть `.data.result`.
+- Объект `*Api` с методами: `apiClient.get<ResponseDto>(...)` → вернуть `.data` (успех — сырой payload, envelope нет);
+  для пагинации бэкенд отдаёт `{ items, page, pageSize, totalCount }` — `totalPages` вычислять на клиенте;
 - Рядом объект `*QueryOptions`:
   - `baseKey: '<domain>'` — для инвалидации;
   - методы возвращают `queryOptions(...)` / `infiniteQueryOptions(...)` (не писать queryKey/queryFn инлайном в хуках);
@@ -76,11 +81,11 @@ src/
   - `useQuery(options)` / `useInfiniteQuery(options)` с опциями из `*QueryOptions`;
   - бесконечная подгрузка через `IntersectionObserver`: хук возвращает `cursorRef: RefCallback<HTMLDivElement>`,
     в списке — `<div ref={cursorRef}>` внизу; защита от дублей через `!isFetchingNextPage && hasNextPage`;
-  - наружу возвращать данные и флаги; ошибку отдавать уже суженной (`error instanceof EnvelopeError ? error : null`).
+  - наружу возвращать данные и флаги; ошибку отдавать уже суженной (`isApiRequestError(error) ? error : null`).
 - Мутации (`useCreate*`):
   - `mutationFn` из `*Api`;
   - `onSettled: () => queryClient.invalidateQueries({ queryKey: [baseKey] })`;
-  - `onError`: `EnvelopeError` → `toast.error(error.message)`, иначе общий текст;
+  - `onError`: `isApiRequestError(error)` → `toast.error(error.message)`, иначе общий текст;
   - `onSuccess`: `toast.success(...)`;
   - возвращать `{ mutate, isPending, isError, error }`.
 
@@ -106,7 +111,7 @@ src/
 ## Ошибки и загрузка в UI
 
 - Обработка ошибок — явная, в месте использования: списки рендерят блок ошибки с текстом
-  (`EnvelopeError` → `error.message`, иначе «неизвестная ошибка» + кнопка перезагрузки);
+  (isApiRequestError(error) → error.message, иначе «неизвестная ошибка» + кнопка перезагрузки);
 - лоадеры — `Loader2 className="animate-spin"` + подпись;
 - тосты — только sonner (`toast.success/error`), `<Toaster richColors />` один, в корневом layout.
 

@@ -24,4 +24,5 @@
 
 - [docs/business-model.md](docs/business-model.md) — бизнес-модель
 - [docs/use-cases.md](docs/use-cases.md) — бизнес-операции Application-слоя
-- [docs/frontend-practices.md](docs/frontend-practices.md) — практики и соглашения фронтенда (react-query/zustand, envelope API, формы, стилизация)
+- [docs/frontend-practices.md](docs/frontend-practices.md) — практики и соглашения фронтенда (react-query/zustand, ProblemDetails API, формы, стилизация)
+- [docs/integration-plan.md](docs/integration-plan.md) — план интеграции фронтенда с бэкендом
