@@ -1,4 +1,5 @@
 using BudgetTracker.Application.Abstractions;
+using BudgetTracker.Application.Transactions;
 using CSharpFunctionalExtensions;
 using Shared.SharedKernel;
 
@@ -9,17 +10,6 @@ public class GetAccountDetails
     public const int DEFAULT_LAST_TRANSACTIONS = 10;
 
     public const int MAX_LAST_TRANSACTIONS = 100;
-
-    public record TransactionInfo(
-        Guid Id,
-        string Type,
-        decimal Amount,
-        string Currency,
-        DateTime Date,
-        string? Description,
-        Guid AccountId,
-        Guid? ToAccountId,
-        Guid? CategoryId);
 
     public record Response(
         AccountInfo Account,
@@ -59,23 +49,14 @@ public class GetAccountDetails
         var accountInfo = new AccountInfo(
             account.Id,
             account.Name.Value,
-            account.Type.ToString(),
+            account.Type,
             account.InitialBalance.Amount,
             account.InitialBalance.Currency,
-            balances.GetValueOrDefault(account.Id, account.InitialBalance.Amount),
+            account.InitialBalance.Amount + balances.GetValueOrDefault(account.Id, 0m),
             account.IsArchived);
 
         var transactionInfos = transactions
-            .Select(t => new TransactionInfo(
-                t.Id,
-                t.Type.ToString(),
-                t.Amount.Amount,
-                t.Amount.Currency,
-                t.Date,
-                t.Description?.Value,
-                t.AccountId,
-                t.ToAccountId,
-                t.CategoryId))
+            .Select(TransactionInfo.From)
             .ToList();
 
         return new Response(accountInfo, transactionInfos);

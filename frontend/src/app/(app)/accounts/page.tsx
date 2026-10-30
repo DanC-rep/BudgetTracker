@@ -1,49 +1,57 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
-import { toast } from 'sonner'
+import { Loader2, Plus } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { AccountCard } from '@/features/accounts/account-card'
 import { ArchivedAccountsList } from '@/features/accounts/archived-accounts-list'
-import { CreateAccountDialog } from '@/features/accounts/create-account-dialog'
-import { getTotalBalance } from '@/features/dashboard/model/dashboard'
-import { formatMoney } from '@/shared/lib/format'
-import { mockAccounts } from '@/shared/lib/mock-data'
+import { CreateAccountDialog, CreateAccountFormData } from '@/features/accounts/create-account-dialog'
+import { RenameAccountDialog } from '@/features/accounts/rename-account-dialog'
+import { useAccounts, useCreateAccount, useRenameAccount, useSetAccountArchived } from '@/features/accounts/model/use-accounts'
+import { getTotalBalance } from '@/entities/accounts/model'
 import { AccountWithBalance } from '@/entities/accounts/types'
+import { formatMoney } from '@/shared/lib/format'
+import { SubmitOptions } from '@/shared/api/types'
+
+const DEFAULT_CURRENCY = 'RUB'
 
 export default function AccountsPage() {
-   // Temporary: local state over mocks. Will be replaced by react-query mutations once the backend integration starts.
-   const [accounts, setAccounts] = useState<AccountWithBalance[]>(mockAccounts)
    const [createOpen, setCreateOpen] = useState(false)
+   const [renamingAccount, setRenamingAccount] = useState<AccountWithBalance | undefined>(undefined)
+   const { accounts, isPending, isError, error, refetch } = useAccounts()
+   const { createAccount, isPending: isCreating } = useCreateAccount()
+   const { renameAccount, isPending: isRenaming } = useRenameAccount()
+   const { setArchived } = useSetAccountArchived()
 
    const activeAccounts = accounts.filter(account => !account.isArchived)
    const archivedAccounts = accounts.filter(account => account.isArchived)
 
-   const handleCreate = (data: { name: string; type: AccountWithBalance['type']; initialBalance: number }) => {
-      const account: AccountWithBalance = {
-         id: `acc-${Date.now()}`,
-         name: data.name,
-         type: data.type,
-         initialBalance: data.initialBalance,
-         balance: data.initialBalance,
-         isArchived: false,
-      }
-
-      setAccounts(current => [...current, account])
-      toast.success(`Счёт «${data.name}» создан`)
+   const handleCreate = (data: CreateAccountFormData, options: SubmitOptions) => {
+      createAccount({ ...data, currency: DEFAULT_CURRENCY }, options)
    }
 
-   const handleArchive = (accountId: string) => {
-      const account = accounts.find(item => item.id === accountId)
-      setAccounts(current => current.map(item => (item.id === accountId ? { ...item, isArchived: true } : item)))
-      if (account) toast.success(`Счёт «${account.name}» архивирован`)
+   const handleRename = (accountId: string, name: string, options: SubmitOptions) => {
+      renameAccount({ accountId, name }, options)
    }
 
-   const handleRestore = (accountId: string) => {
-      const account = accounts.find(item => item.id === accountId)
-      setAccounts(current => current.map(item => (item.id === accountId ? { ...item, isArchived: false } : item)))
-      if (account) toast.success(`Счёт «${account.name}» восстановлен`)
+   if (isPending) {
+      return (
+         <div className="flex flex-1 items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 className="animate-spin" />
+            Загрузка счетов…
+         </div>
+      )
+   }
+
+   if (isError) {
+      return (
+         <div className="flex flex-1 flex-col items-center justify-center gap-3">
+            <p className="text-sm text-muted-foreground">{error?.firstMessage ?? 'Не удалось загрузить счета'}</p>
+            <Button variant="outline" onClick={() => refetch()}>
+               Повторить
+            </Button>
+         </div>
+      )
    }
 
    return (
@@ -63,7 +71,12 @@ export default function AccountsPage() {
 
          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {activeAccounts.map(account => (
-               <AccountCard key={account.id} account={account} onArchive={handleArchive} />
+               <AccountCard
+                  key={account.id}
+                  account={account}
+                  onEdit={setRenamingAccount}
+                  onArchive={accountId => setArchived({ accountId, archived: true })}
+               />
             ))}
          </div>
 
@@ -73,9 +86,25 @@ export default function AccountsPage() {
             </p>
          )}
 
-         <ArchivedAccountsList accounts={archivedAccounts} onRestore={handleRestore} />
+         <ArchivedAccountsList accounts={archivedAccounts} onRestore={accountId => setArchived({ accountId, archived: false })} />
 
-         <CreateAccountDialog open={createOpen} onOpenChange={setCreateOpen} onCreate={handleCreate} />
+         <CreateAccountDialog
+            open={createOpen}
+            onOpenChange={setCreateOpen}
+            onCreate={handleCreate}
+            isPending={isCreating}
+         />
+
+         <RenameAccountDialog
+            key={renamingAccount?.id ?? 'new'}
+            open={renamingAccount !== undefined}
+            onOpenChange={open => {
+               if (!open) setRenamingAccount(undefined)
+            }}
+            account={renamingAccount}
+            onSubmit={handleRename}
+            isPending={isRenaming}
+         />
       </div>
    )
 }

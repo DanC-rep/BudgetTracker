@@ -3,6 +3,7 @@
 import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/shared/components/ui/button'
 import {
    Dialog,
@@ -20,6 +21,8 @@ import {
    SelectValue,
 } from '@/shared/components/ui/select'
 import { cn } from 'cn'
+import { applyServerFieldErrors } from '@/shared/api/form-errors'
+import { SubmitOptions } from '@/shared/api/types'
 import { categoryColorPresets, categoryTypeLabel } from '@/entities/categories/model'
 import { Category, CategoryType } from '@/entities/categories/types'
 
@@ -40,10 +43,11 @@ type Props = {
    onOpenChange: (open: boolean) => void
    /** When provided, the dialog works in edit mode: type is locked, title changes */
    category?: Category
-   onSubmit: (data: CategoryFormData) => void
+   onSubmit: (data: CategoryFormData, options: SubmitOptions) => void
+   isPending?: boolean
 }
 
-export function CategoryFormDialog({ open, onOpenChange, category, onSubmit }: Props) {
+export function CategoryFormDialog({ open, onOpenChange, category, onSubmit, isPending = false }: Props) {
    const isEdit = category !== undefined
 
    const {
@@ -51,6 +55,7 @@ export function CategoryFormDialog({ open, onOpenChange, category, onSubmit }: P
       handleSubmit,
       reset,
       control,
+      setError,
       formState: { errors },
    } = useForm<CategoryFormData>({
       defaultValues: category
@@ -72,9 +77,26 @@ export function CategoryFormDialog({ open, onOpenChange, category, onSubmit }: P
    const type = useWatch({ control, name: 'type' })
 
    const handleFormSubmit = (data: CategoryFormData) => {
-      onSubmit(data)
-      reset()
-      onOpenChange(false)
+      onSubmit(data, {
+         onSuccess: () => {
+            reset()
+            onOpenChange(false)
+         },
+         onError: error => {
+            const unmapped = applyServerFieldErrors(
+               error,
+               (field, message) => setError(field as keyof CategoryFormData, { type: 'server', message }),
+               {
+                  byInvalidField: { 'тип категории': 'type' },
+                  byCode: {
+                     'length.is.invalid': 'name',
+                     'money.amount.must.be.positive': 'monthlyLimit',
+                  },
+               },
+            )
+            unmapped.forEach(message => toast.error(message))
+         },
+      })
    }
 
    return (
@@ -109,7 +131,9 @@ export function CategoryFormDialog({ open, onOpenChange, category, onSubmit }: P
                               value={field.value}
                               onValueChange={value => value && field.onChange(value as CategoryType)}>
                               <SelectTrigger id="category-type" className="w-full">
-                                 <SelectValue />
+                                 <SelectValue>
+                                    {(value: string) => categoryTypeLabel[value as CategoryType] ?? 'Выберите тип'}
+                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent>
                                  <SelectItem value="expense">Расход</SelectItem>
@@ -172,7 +196,9 @@ export function CategoryFormDialog({ open, onOpenChange, category, onSubmit }: P
                   <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                      Отмена
                   </Button>
-                  <Button type="submit">{isEdit ? 'Сохранить' : 'Создать категорию'}</Button>
+                  <Button type="submit" disabled={isPending}>
+                     {isEdit ? 'Сохранить' : 'Создать категорию'}
+                  </Button>
                </div>
             </form>
          </DialogContent>

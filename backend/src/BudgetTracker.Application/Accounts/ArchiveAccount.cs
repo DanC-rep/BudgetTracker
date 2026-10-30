@@ -40,10 +40,10 @@ public class ArchiveAccount
         return new AccountInfo(
             account.Id,
             account.Name.Value,
-            account.Type.ToString(),
+            account.Type,
             account.InitialBalance.Amount,
             account.InitialBalance.Currency,
-            balances.GetValueOrDefault(account.Id, account.InitialBalance.Amount),
+            account.InitialBalance.Amount + balances.GetValueOrDefault(account.Id, 0m),
             account.IsArchived);
     }
 }

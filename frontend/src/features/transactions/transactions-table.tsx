@@ -1,8 +1,9 @@
 'use client'
 
-import { ArrowRightLeft } from 'lucide-react'
+import { ArrowRightLeft, Pencil, Trash2 } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table'
 import { Badge } from '@/shared/components/ui/badge'
+import { Button } from '@/shared/components/ui/button'
 import { formatDateTime, formatMoney } from '@/shared/lib/format'
 import { TransactionView } from '@/entities/transactions/view'
 
@@ -31,9 +32,12 @@ function AmountCell({ view }: { view: TransactionView }) {
 
 type Props = {
    items: TransactionView[]
+   onEdit: (view: TransactionView) => void
+   onDelete: (transactionId: string) => void
+   deletingId: string | null
 }
 
-export function TransactionsTable({ items }: Props) {
+export function TransactionsTable({ items, onEdit, onDelete, deletingId }: Props) {
    return (
       <Table>
          <TableHeader>
@@ -43,6 +47,7 @@ export function TransactionsTable({ items }: Props) {
                <TableHead>Счёт</TableHead>
                <TableHead className="w-48">Комментарий</TableHead>
                <TableHead className="text-right">Сумма</TableHead>
+               <TableHead className="w-12" />
             </TableRow>
          </TableHeader>
          <TableBody>
@@ -70,16 +75,35 @@ export function TransactionsTable({ items }: Props) {
                         : view.account.name}
                   </TableCell>
                   <TableCell className="max-w-48 truncate text-muted-foreground">
-                     {view.transaction.comment ?? '—'}
+                     {view.transaction.description ?? '—'}
                   </TableCell>
                   <TableCell className="text-right">
                      <AmountCell view={view} />
+                  </TableCell>
+                  <TableCell>
+                     <div className="flex justify-end">
+                        <Button
+                           variant="ghost"
+                           size="icon"
+                           aria-label="Изменить операцию"
+                           onClick={() => onEdit(view)}>
+                           <Pencil />
+                        </Button>
+                        <Button
+                           variant="ghost"
+                           size="icon"
+                           aria-label="Удалить операцию"
+                           disabled={deletingId === view.transaction.id}
+                           onClick={() => onDelete(view.transaction.id)}>
+                           <Trash2 />
+                        </Button>
+                     </div>
                   </TableCell>
                </TableRow>
             ))}
             {items.length === 0 && (
                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                      Операции не найдены. Попробуйте изменить фильтры.
                   </TableCell>
                </TableRow>

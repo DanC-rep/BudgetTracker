@@ -34,10 +34,10 @@ public class GetAccounts
             .Select(a => new AccountInfo(
                 a.Id,
                 a.Name.Value,
-                a.Type.ToString(),
+                a.Type,
                 a.InitialBalance.Amount,
                 a.InitialBalance.Currency,
-                balances.GetValueOrDefault(a.Id, a.InitialBalance.Amount),
+                a.InitialBalance.Amount + balances.GetValueOrDefault(a.Id, 0m),
                 a.IsArchived))
             .ToList();
     }

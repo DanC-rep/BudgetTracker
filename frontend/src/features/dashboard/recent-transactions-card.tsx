@@ -5,13 +5,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/shared/components/ui/badge'
 import { routes } from '@/shared/routes'
 import { formatDateTime, formatMoney } from '@/shared/lib/format'
-import type { RecentTransaction } from './model/dashboard'
+import { TransactionView } from '@/entities/transactions/view'
 
 type Props = {
-   transactions: RecentTransaction[]
+   transactions: TransactionView[]
 }
 
-function AmountBadge({ transaction }: { transaction: RecentTransaction['transaction'] }) {
+function AmountBadge({ transaction }: { transaction: TransactionView['transaction'] }) {
    if (transaction.type === 'transfer') {
       return (
          <Badge variant="outline" className="gap-1 tabular-nums">
@@ -80,7 +80,7 @@ export function RecentTransactionsCard({ transactions }: Props) {
                               : account.name}
                         </TableCell>
                         <TableCell className="max-w-40 truncate text-muted-foreground">
-                           {transaction.comment ?? '—'}
+                           {transaction.description ?? '—'}
                         </TableCell>
                         <TableCell className="text-right">
                            <AmountBadge transaction={transaction} />

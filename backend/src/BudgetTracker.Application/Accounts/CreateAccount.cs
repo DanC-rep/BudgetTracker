@@ -53,7 +53,7 @@ public class CreateAccount
         return new AccountInfo(
             account.Value.Id,
             account.Value.Name.Value,
-            account.Value.Type.ToString(),
+            account.Value.Type,
             account.Value.InitialBalance.Amount,
             account.Value.InitialBalance.Currency,
             account.Value.InitialBalance.Amount,

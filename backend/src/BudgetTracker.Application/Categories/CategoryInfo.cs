@@ -1,11 +1,12 @@
 using BudgetTracker.Domain.Categories;
+using BudgetTracker.Domain.Enums;
 
 namespace BudgetTracker.Application.Categories;
 
 public sealed record CategoryInfo(
     Guid Id,
     string Name,
-    string Type,
+    CategoryType Type,
     string Icon,
     string Color,
     decimal? MonthlyLimit,
@@ -18,7 +19,7 @@ public sealed record CategoryInfo(
         new(
             category.Id,
             category.Name.Value,
-            category.Type.ToString(),
+            category.Type,
             category.Icon,
             category.Color,
             category.MonthlyLimit?.Amount,

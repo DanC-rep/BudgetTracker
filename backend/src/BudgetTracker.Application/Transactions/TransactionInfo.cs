@@ -1,10 +1,11 @@
+using BudgetTracker.Domain.Enums;
 using BudgetTracker.Domain.Transactions;
 
 namespace BudgetTracker.Application.Transactions;
 
 public sealed record TransactionInfo(
     Guid Id,
-    string Type,
+    TransactionType Type,
     decimal Amount,
     string Currency,
     DateTime Date,
@@ -16,7 +17,7 @@ public sealed record TransactionInfo(
     public static TransactionInfo From(Transaction transaction) =>
         new(
             transaction.Id,
-            transaction.Type.ToString(),
+            transaction.Type,
             transaction.Amount.Amount,
             transaction.Amount.Currency,
             transaction.Date,

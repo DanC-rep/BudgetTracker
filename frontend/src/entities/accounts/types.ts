@@ -5,6 +5,7 @@ export type Account = {
    name: string
    type: AccountType
    initialBalance: number
+   currency: string
    isArchived: boolean
 }
 

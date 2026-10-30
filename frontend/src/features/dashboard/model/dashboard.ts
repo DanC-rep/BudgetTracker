@@ -1,7 +1,5 @@
-import { AccountWithBalance } from '@/entities/accounts/types'
 import { Category } from '@/entities/categories/types'
-import { Transaction } from '@/entities/transactions/types'
-import { TransactionView, sortByDateDesc, toTransactionView } from '@/entities/transactions/view'
+import { BudgetStatusResponseItem, MonthlySummary } from '@/entities/reports/api'
 
 export type MonthStats = {
    income: number
@@ -16,74 +14,30 @@ export type BudgetStatusItem = {
    percent: number
 }
 
-export type RecentTransaction = TransactionView
-
-export type DashboardData = {
-   totalBalance: number
-   activeAccounts: AccountWithBalance[]
-   monthStats: MonthStats
-   budgetStatus: BudgetStatusItem[]
-   recentTransactions: RecentTransaction[]
-}
-
-function isSameMonth(date: Date, reference: Date): boolean {
-   return date.getFullYear() === reference.getFullYear() && date.getMonth() === reference.getMonth()
-}
-
-export function getTotalBalance(accounts: AccountWithBalance[]): number {
-   return accounts.filter(account => !account.isArchived).reduce((sum, account) => sum + account.balance, 0)
-}
-
-export function getMonthStats(transactions: Transaction[], month: Date): MonthStats {
-   let income = 0
-   let expense = 0
-
-   for (const transaction of transactions) {
-      if (!isSameMonth(new Date(transaction.date), month)) continue
-
-      if (transaction.type === 'income') income += transaction.amount
-      if (transaction.type === 'expense') expense += transaction.amount
+export function toMonthStats(summary: MonthlySummary | null): MonthStats {
+   return {
+      income: summary?.totalIncome ?? 0,
+      expense: summary?.totalExpense ?? 0,
+      net: summary?.net ?? 0,
    }
-
-   return { income, expense, net: income - expense }
 }
 
-export function getBudgetStatus(
-   transactions: Transaction[],
+/** Join the budget-status report with categories to restore color for display; keeps server ordering */
+export function toBudgetStatusItems(
+   items: BudgetStatusResponseItem[],
    categories: Category[],
-   month: Date,
 ): BudgetStatusItem[] {
-   return categories
-      .filter(category => !category.isHidden && category.type === 'expense' && category.monthlyLimit !== null)
-      .map(category => {
-         const spent = transactions
-            .filter(
-               transaction =>
-                  transaction.type === 'expense' &&
-                  transaction.categoryId === category.id &&
-                  isSameMonth(new Date(transaction.date), month),
-            )
-            .reduce((sum, transaction) => sum + transaction.amount, 0)
+   return items.flatMap(item => {
+      const category = categories.find(candidate => candidate.id === item.categoryId)
+      if (!category) return []
 
-         const limit = category.monthlyLimit as number
-
-         return {
+      return [
+         {
             category,
-            spent,
-            limit,
-            percent: Math.min(100, Math.round((spent / limit) * 100)),
-         }
-      })
-      .sort((a, b) => b.spent / b.limit - a.spent / a.limit)
-}
-
-export function getRecentTransactions(
-   transactions: Transaction[],
-   accounts: AccountWithBalance[],
-   categories: Category[],
-   count: number,
-): RecentTransaction[] {
-   return sortByDateDesc(transactions)
-      .slice(0, count)
-      .map(transaction => toTransactionView(transaction, accounts, categories))
+            spent: item.spent,
+            limit: item.monthlyLimit,
+            percent: Math.min(100, Math.round((item.spent / item.monthlyLimit) * 100)),
+         },
+      ]
+   })
 }

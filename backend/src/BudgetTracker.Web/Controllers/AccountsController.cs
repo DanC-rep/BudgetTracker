@@ -15,19 +15,22 @@ public class AccountsController : ControllerBase
     private readonly GetAccountDetails _getAccountDetails;
     private readonly RenameAccount _renameAccount;
     private readonly ArchiveAccount _archiveAccount;
+    private readonly UnarchiveAccount _unarchiveAccount;
 
     public AccountsController(
         CreateAccount createAccount,
         GetAccounts getAccounts,
         GetAccountDetails getAccountDetails,
         RenameAccount renameAccount,
-        ArchiveAccount archiveAccount)
+        ArchiveAccount archiveAccount,
+        UnarchiveAccount unarchiveAccount)
     {
         _createAccount = createAccount;
         _getAccounts = getAccounts;
         _getAccountDetails = getAccountDetails;
         _renameAccount = renameAccount;
         _archiveAccount = archiveAccount;
+        _unarchiveAccount = unarchiveAccount;
     }
 
     [HttpPost]
@@ -84,6 +87,18 @@ public class AccountsController : ControllerBase
     {
         var result = await _archiveAccount.ExecuteAsync(
             new ArchiveAccount.Request(accountId),
+            cancellationToken);
+
+        return result.ToActionResult(Ok);
+    }
+
+    [HttpPost("{accountId:guid}/unarchive")]
+    public async Task<IActionResult> Unarchive(
+        Guid accountId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _unarchiveAccount.ExecuteAsync(
+            new UnarchiveAccount.Request(accountId),
             cancellationToken);
 
         return result.ToActionResult(Ok);

@@ -1,4 +1,4 @@
-import { Archive } from 'lucide-react'
+import { Archive, Pencil } from 'lucide-react'
 import { Card, CardContent, CardFooter } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { formatMoney } from '@/shared/lib/format'
@@ -7,10 +7,11 @@ import { AccountWithBalance } from '@/entities/accounts/types'
 
 type Props = {
    account: AccountWithBalance
+   onEdit: (account: AccountWithBalance) => void
    onArchive: (accountId: string) => void
 }
 
-export function AccountCard({ account, onArchive }: Props) {
+export function AccountCard({ account, onEdit, onArchive }: Props) {
    const Icon = accountTypeIcon[account.type]
 
    return (
@@ -36,7 +37,11 @@ export function AccountCard({ account, onArchive }: Props) {
                </p>
             )}
          </CardContent>
-         <CardFooter className="border-t pt-3">
+         <CardFooter className="justify-between border-t pt-3">
+            <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => onEdit(account)}>
+               <Pencil />
+               Переименовать
+            </Button>
             <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => onArchive(account.id)}>
                <Archive />
                Архивировать

@@ -56,4 +56,9 @@ public class Account : Entity<Guid>
     {
         IsArchived = true;
     }
+
+    public void Unarchive()
+    {
+        IsArchived = false;
+    }
 }

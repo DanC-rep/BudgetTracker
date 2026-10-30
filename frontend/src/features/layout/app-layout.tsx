@@ -1,24 +1,20 @@
 'use client'
 
-import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/shared/components/ui/sidebar'
 import { Button } from '@/shared/components/ui/button'
 import { Separator } from '@/shared/components/ui/separator'
 import { formatMonth } from '@/shared/lib/format'
 import { AppSidebar } from '@/features/sidebar/app-sidebar'
-
-function shiftMonth(date: Date, delta: number): Date {
-   return new Date(date.getFullYear(), date.getMonth() + delta, 1)
-}
+import { useMonthStore } from './model/month-store'
 
 export default function AppLayout({
    children,
 }: Readonly<{
    children: React.ReactNode
 }>) {
-   // Temporary: the selected month will come from a filter store once backend integration starts
-   const [month, setMonth] = useState(() => new Date())
+   const month = useMonthStore(state => state.month)
+   const shiftMonth = useMonthStore(state => state.shiftMonth)
 
    return (
       <SidebarProvider>
@@ -33,7 +29,7 @@ export default function AppLayout({
                      variant="ghost"
                      size="icon"
                      aria-label="Предыдущий месяц"
-                     onClick={() => setMonth(current => shiftMonth(current, -1))}>
+                     onClick={() => shiftMonth(-1)}>
                      <ChevronLeft />
                   </Button>
                   <span className="w-32 text-center capitalize">{formatMonth(month)}</span>
@@ -41,7 +37,7 @@ export default function AppLayout({
                      variant="ghost"
                      size="icon"
                      aria-label="Следующий месяц"
-                     onClick={() => setMonth(current => shiftMonth(current, 1))}>
+                     onClick={() => shiftMonth(1)}>
                      <ChevronRight />
                   </Button>
                </div>

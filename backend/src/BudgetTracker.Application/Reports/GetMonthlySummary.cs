@@ -7,7 +7,7 @@ namespace BudgetTracker.Application.Reports;
 
 public class GetMonthlySummary
 {
-    public record CategoryBreakdown(Guid CategoryId, string Name, string Type, decimal Total);
+    public record CategoryBreakdown(Guid CategoryId, string Name, CategoryType Type, decimal Total);
 
     public record Response(
         decimal TotalIncome,
@@ -56,16 +56,16 @@ public class GetMonthlySummary
                 return new CategoryBreakdown(
                     category.Id,
                     category.Name.Value,
-                    category.Type.ToString(),
+                    category.Type,
                     t.Total);
             })
             .ToList();
 
         var totalIncome = byCategory
-            .Where(b => b.Type == CategoryType.Income.ToString())
+            .Where(b => b.Type == CategoryType.Income)
             .Sum(b => b.Total);
         var totalExpense = byCategory
-            .Where(b => b.Type == CategoryType.Expense.ToString())
+            .Where(b => b.Type == CategoryType.Expense)
             .Sum(b => b.Total);
 
         return new Response(totalIncome, totalExpense, totalIncome - totalExpense, byCategory);

@@ -1,22 +1,36 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
-import { toast } from 'sonner'
+import { Loader2, Plus } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { CategoryCard } from '@/features/categories/category-card'
 import { CategoryFormData, CategoryFormDialog } from '@/features/categories/category-form-dialog'
-import { canDeleteCategory, getCategorySpent } from '@/entities/categories/model'
+import {
+   useCategories,
+   useCreateCategory,
+   useDeleteCategory,
+   useSetCategoryHidden,
+   useUpdateCategory,
+} from '@/features/categories/model/use-categories'
+import { useMonthlySummary } from '@/features/reports/model/use-reports'
 import { Category } from '@/entities/categories/types'
-import { mockCategories, mockTransactions } from '@/shared/lib/mock-data'
+import { SubmitOptions } from '@/shared/api/types'
+
+const DEFAULT_CURRENCY = 'RUB'
 
 export default function CategoriesPage() {
-   // Temporary: local state over mocks. Will be replaced by react-query mutations once the backend integration starts.
-   const [categories, setCategories] = useState<Category[]>(mockCategories)
    const [dialogOpen, setDialogOpen] = useState(false)
    const [editingCategory, setEditingCategory] = useState<Category | undefined>(undefined)
 
-   const month = new Date()
+   const { categories, isPending, isError, error, refetch } = useCategories()
+   const { createCategory, isPending: isSaving } = useCreateCategory()
+   const { updateCategory } = useUpdateCategory()
+   const { setHidden } = useSetCategoryHidden()
+   const { deleteCategory } = useDeleteCategory()
+
+   const now = new Date()
+   const summary = useMonthlySummary(now.getFullYear(), now.getMonth() + 1)
+   const spentByCategory = new Map((summary?.byCategory ?? []).map(item => [item.categoryId, item.total]))
 
    const expenseCategories = categories.filter(category => category.type === 'expense')
    const incomeCategories = categories.filter(category => category.type === 'income')
@@ -31,52 +45,59 @@ export default function CategoriesPage() {
       setDialogOpen(true)
    }
 
-   const handleSubmit = (data: CategoryFormData) => {
+   const handleSubmit = (data: CategoryFormData, options: SubmitOptions) => {
       if (editingCategory) {
-         setCategories(current =>
-            current.map(category =>
-               category.id === editingCategory.id
-                  ? {
-                       ...category,
-                       name: data.name,
-                       color: data.color,
-                       monthlyLimit: data.type === 'expense' ? data.monthlyLimit : null,
-                    }
-                  : category,
-            ),
+         const clearMonthlyLimit = data.monthlyLimit === null
+
+         updateCategory(
+            {
+               categoryId: editingCategory.id,
+               request: {
+                  name: data.name,
+                  color: data.color,
+                  monthlyLimit: clearMonthlyLimit ? null : data.monthlyLimit,
+                  clearMonthlyLimit,
+                  currency: clearMonthlyLimit ? null : DEFAULT_CURRENCY,
+               },
+            },
+            options,
          )
-         toast.success(`Категория «${data.name}» обновлена`)
          return
       }
 
-      const category: Category = {
-         id: `cat-${Date.now()}`,
-         name: data.name,
-         type: data.type,
-         color: data.color,
-         monthlyLimit: data.type === 'expense' ? data.monthlyLimit : null,
-         isSystem: false,
-         isHidden: false,
-      }
+      const monthlyLimit = data.type === 'expense' ? data.monthlyLimit : null
 
-      setCategories(current => [...current, category])
-      toast.success(`Категория «${data.name}» создана`)
-   }
-
-   const handleToggleHidden = (categoryId: string) => {
-      const category = categories.find(item => item.id === categoryId)
-      if (!category) return
-
-      setCategories(current =>
-         current.map(item => (item.id === categoryId ? { ...item, isHidden: !item.isHidden } : item)),
+      createCategory(
+         {
+            name: data.name,
+            type: data.type,
+            icon: null,
+            color: data.color,
+            monthlyLimit,
+            currency: monthlyLimit !== null ? DEFAULT_CURRENCY : null,
+         },
+         options,
       )
-      toast.success(category.isHidden ? `Категория «${category.name}» показана` : `Категория «${category.name}» скрыта`)
    }
 
-   const handleDelete = (categoryId: string) => {
-      const category = categories.find(item => item.id === categoryId)
-      setCategories(current => current.filter(item => item.id !== categoryId))
-      if (category) toast.success(`Категория «${category.name}» удалена`)
+   if (isPending) {
+      return (
+         <div className="flex flex-1 items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 className="animate-spin" />
+            Загрузка категорий…
+         </div>
+      )
+   }
+
+   if (isError) {
+      return (
+         <div className="flex flex-1 flex-col items-center justify-center gap-3">
+            <p className="text-sm text-muted-foreground">{error?.firstMessage ?? 'Не удалось загрузить категории'}</p>
+            <Button variant="outline" onClick={() => refetch()}>
+               Повторить
+            </Button>
+         </div>
+      )
    }
 
    const renderGrid = (items: Category[]) => (
@@ -85,11 +106,13 @@ export default function CategoriesPage() {
             <CategoryCard
                key={category.id}
                category={category}
-               spent={getCategorySpent(mockTransactions, category.id, month)}
-               canDelete={canDeleteCategory(category, mockTransactions)}
+               spent={spentByCategory.get(category.id) ?? 0}
+               canDelete={!category.isSystem}
                onEdit={openEditDialog}
-               onToggleHidden={handleToggleHidden}
-               onDelete={handleDelete}
+               onToggleHidden={categoryId =>
+                  setHidden({ categoryId, hidden: !category.isHidden, name: category.name })
+               }
+               onDelete={categoryId => deleteCategory({ categoryId, name: category.name })}
             />
          ))}
       </div>
@@ -133,10 +156,12 @@ export default function CategoriesPage() {
          </section>
 
          <CategoryFormDialog
+            key={editingCategory?.id ?? 'new'}
             open={dialogOpen}
             onOpenChange={setDialogOpen}
             category={editingCategory}
             onSubmit={handleSubmit}
+            isPending={isSaving}
          />
       </div>
    )

@@ -3,6 +3,7 @@
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/shared/components/ui/button'
 import {
    Dialog,
@@ -19,6 +20,8 @@ import {
    SelectTrigger,
    SelectValue,
 } from '@/shared/components/ui/select'
+import { applyServerFieldErrors } from '@/shared/api/form-errors'
+import { SubmitOptions } from '@/shared/api/types'
 import { accountTypeLabel, accountTypeOptions } from '@/entities/accounts/model'
 import { AccountType } from '@/entities/accounts/types'
 
@@ -31,20 +34,22 @@ const createAccountSchema = z.object({
    initialBalance: z.number().min(0, 'Начальный баланс не может быть отрицательным'),
 })
 
-type CreateAccountFormData = z.infer<typeof createAccountSchema>
+export type CreateAccountFormData = z.infer<typeof createAccountSchema>
 
 type Props = {
    open: boolean
    onOpenChange: (open: boolean) => void
-   onCreate: (data: CreateAccountFormData) => void
+   onCreate: (data: CreateAccountFormData, options: SubmitOptions) => void
+   isPending?: boolean
 }
 
-export function CreateAccountDialog({ open, onOpenChange, onCreate }: Props) {
+export function CreateAccountDialog({ open, onOpenChange, onCreate, isPending = false }: Props) {
    const {
       register,
       handleSubmit,
       reset,
       control,
+      setError,
       formState: { errors },
    } = useForm<CreateAccountFormData>({
       defaultValues: {
@@ -56,9 +61,26 @@ export function CreateAccountDialog({ open, onOpenChange, onCreate }: Props) {
    })
 
    const onSubmit = (data: CreateAccountFormData) => {
-      onCreate(data)
-      reset()
-      onOpenChange(false)
+      onCreate(data, {
+         onSuccess: () => {
+            reset()
+            onOpenChange(false)
+         },
+         onError: error => {
+            const unmapped = applyServerFieldErrors(
+               error,
+               (field, message) => setError(field as keyof CreateAccountFormData, { type: 'server', message }),
+               {
+                  byInvalidField: { 'тип счёта': 'type' },
+                  byCode: {
+                     'length.is.invalid': 'name',
+                     'money.amount.must.be.positive': 'initialBalance',
+                  },
+               },
+            )
+            unmapped.forEach(message => toast.error(message))
+         },
+      })
    }
 
    return (
@@ -88,7 +110,9 @@ export function CreateAccountDialog({ open, onOpenChange, onCreate }: Props) {
                      render={({ field }) => (
                         <Select value={field.value} onValueChange={value => value && field.onChange(value as AccountType)}>
                            <SelectTrigger id="account-type" className="w-full">
-                              <SelectValue />
+                              <SelectValue>
+                                 {(value: string) => accountTypeLabel[value as AccountType] ?? 'Выберите тип'}
+                              </SelectValue>
                            </SelectTrigger>
                            <SelectContent>
                               {accountTypeOptions.map(type => (
@@ -122,7 +146,9 @@ export function CreateAccountDialog({ open, onOpenChange, onCreate }: Props) {
                   <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                      Отмена
                   </Button>
-                  <Button type="submit">Создать счёт</Button>
+                  <Button type="submit" disabled={isPending}>
+                     Создать счёт
+                  </Button>
                </div>
             </form>
          </DialogContent>

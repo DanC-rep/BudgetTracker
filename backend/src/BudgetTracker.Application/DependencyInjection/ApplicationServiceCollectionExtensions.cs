@@ -18,6 +18,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<CreateAccount>();
         services.AddScoped<RenameAccount>();
         services.AddScoped<ArchiveAccount>();
+        services.AddScoped<UnarchiveAccount>();
         services.AddScoped<GetAccounts>();
         services.AddScoped<GetAccountDetails>();
 

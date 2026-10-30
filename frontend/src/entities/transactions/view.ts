@@ -22,7 +22,3 @@ export function toTransactionView(
       toAccount: accounts.find(account => account.id === transaction.toAccountId) ?? null,
    }
 }
-
-export function sortByDateDesc(transactions: Transaction[]): Transaction[] {
-   return [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-}
